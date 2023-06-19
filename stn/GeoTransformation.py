@@ -8,10 +8,14 @@ from numpy import sin, cos, tan
 import os
 import random
 from torch import linalg
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def inv_affine_matrix(A):
-    # Calculate the inversed affine transformation matrix with 6 parameters.
+    """
+    Calculate the inversed affine transformation matrix with 6 parameters.
+    """
     TA = A.size()
     B = torch.Tensor([[[0, 0, 1]]]).to(device)
     B = B.repeat(TA[0], 1, 1)
@@ -20,10 +24,13 @@ def inv_affine_matrix(A):
     Inv = Inv[:, 0:2, :]
     return Inv
 
+
 def get_affine_matrix(img_size, translation_pixel_x, translation_pixel_y,
-                  scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y):
-    # Calculate the affine transformation matrix and its inverse matrix
-    # from the given parameters of translation, scaling, rotation and shearing.
+                      scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y):
+    """
+    Calculate the affine transformation matrix and its inverse matrix
+    from the given parameters of translation, scaling, rotation and shearing.
+    """
     dx = translation_pixel_x * 2 / img_size
     dy = translation_pixel_y * 2 / img_size
     sx = scale_x
@@ -37,11 +44,15 @@ def get_affine_matrix(img_size, translation_pixel_x, translation_pixel_y,
     A_inv = inv_affine_matrix(A)
     return A, A_inv
 
+
 def get_random_number_from_range(range_):
+    """
+        返回一个range_[0]到range_[1]之间的一个随机数
+    """
     if range_[2]:
         range_ = np.array(range_)
         t = 0
-        while range_[0]%1 or range_[1]%1 or range_[2]%1:
+        while range_[0] % 1 or range_[1] % 1 or range_[2] % 1:
             range_ = range_ * 10
             t = t + 1
         range_ = np.array(range_, dtype=int)
@@ -52,7 +63,11 @@ def get_random_number_from_range(range_):
     else:
         return range_[0]
 
+
 def get_all_random_parameters_from_range(range_):
+    """
+
+    """
     range_translation_pixel_x = range_['range_translation_pixel_x']
     range_translation_pixel_y = range_['range_translation_pixel_y']
     range_scale_x = range_['range_scale_x']
@@ -75,43 +90,52 @@ def get_all_random_parameters_from_range(range_):
         else get_random_number_from_range(range_shear_angle_y)
     return translation_pixel_x, translation_pixel_y, scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y
 
+
 def AffineTransform(tensor_, affine_matrix):
+    """
+
+    """
     TS = tensor_.size()
     TA = affine_matrix.size()
-    if len(TS)==4:
+    if len(TS) == 4:
         b = tensor_.size()[0]
-    elif len(TS)==3 and TS[0]==1:
+    elif len(TS) == 3 and TS[0] == 1:
         b = 1
         tensor_ = tensor_.unsqueeze(0)
-    elif len(TS)==2:
+    elif len(TS) == 2:
         b = 1
         tensor_ = tensor_.unsqueeze(0).unsqueeze(0)
-    if len(TA)==2:
+    if len(TA) == 2:
         affine_matrix = affine_matrix.repeat(b, 1, 1)
     grid = F.affine_grid(affine_matrix, tensor_.size())
     tensor_warp = F.grid_sample(tensor_, grid)
     return tensor_warp
 
+
 def AffineTransformFromRange(tensor_, range_):
+    """
+
+    """
     translation_pixel_x, translation_pixel_y, scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y = \
         get_all_random_parameters_from_range(range_)
     assert tensor_.size()[-1] == tensor_.size()[-2]
     img_size = tensor_.size()[-1]
     A, A_inv = get_affine_matrix(img_size, translation_pixel_x, translation_pixel_y,
-                  scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y)
+                                 scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y)
     tensor_warp = AffineTransform(tensor_, A)
     return tensor_warp, A, A_inv
+
 
 def affine(img, translation_pixel_x, translation_pixel_y, scale_x, scale_y, rotate_angle, shear_angle_x, shear_angle_y):
     img = img.unsqueeze(0)
     [b, c, w, h] = img.shape
-    sx = 1/scale_x
-    sy = 1/scale_y
+    sx = 1 / scale_x
+    sy = 1 / scale_y
     dx = move_x
     dy = move_y
-    theta = rotate_angle*np.pi/180
-    faix = shearx_angle*np.pi/180
-    faiy = sheary_angle*np.pi/180
+    theta = rotate_angle * np.pi / 180
+    faix = shearx_angle * np.pi / 180
+    faiy = sheary_angle * np.pi / 180
     A = torch.tensor(np.float32(np.array([[
         (sx * (cos(theta) - sin(theta) * tan(faiy)), sx * (cos(theta) * tan(faix) - sin(theta)), dx),
         (sy * (sin(theta) + cos(theta) * tan(faiy)), sy * (sin(theta) * tan(faix) + cos(theta)), dy)]]))).to(device)
@@ -125,3 +149,7 @@ def affine(img, translation_pixel_x, translation_pixel_y, scale_x, scale_y, rota
     matrix = A.reshape(6)
     matrix_inv = Inv.reshape(6)
     return img_flow, matrix, matrix_inv
+
+
+if __name__ == '__main__':
+    pass

@@ -15,6 +15,7 @@ from stn.GeoTransformation import AffineTransform
 import warnings
 warnings.filterwarnings("ignore")
 
+
 def adjust_learning_rate(optimizer):
     for group in optimizer.param_groups:
         if 'step' not in group:
@@ -24,6 +25,7 @@ def adjust_learning_rate(optimizer):
         group['lr'] = learn_rate * (
                 1.0 - float(group['step']) * float(batch_size) / (num_sample * float(train_epoch)))
     return
+
 
 def show_loss_fig(Epoch, Loss):
     np_Epoch = np.array(Epoch.copy())
@@ -44,6 +46,7 @@ def show_loss_fig(Epoch, Loss):
     plt.title('Compare loss for different models in training')
     plt.savefig(save_loss_folder + 'train_results_loss.png')
     pl.show
+
 
 def train():
     print('Using device ' + str(device) + ' for training!')
@@ -84,18 +87,20 @@ def train():
                                          'MUNet' + '_{}_{}.pth').format(epoch, round(loss_epoch, 5))
         torch.save(model.state_dict(), save_model_path)
 
+
 def input_tensor_preprocess(tensor_, scale):
     scale_factor = int(1/scale)
     Pooling = nn.AvgPool2d(scale_factor,stride=2,padding=0,ceil_mode=False)
     tensor_ = Pooling(tensor_)
     return tensor_
 
+
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     """ PATH Setting """
-    train_modal1_folder = 'E:/Tang/DATA/Optical-Optical/time1/'  # Folder path for training image pairs for modal-1 and model-2.
-    train_modal2_folder = 'E:/Tang/DATA/Optical-Optical/time2/'
+    train_modal1_folder = 'E://dataset/Optical-Optical/ref'  # Folder path for training image pairs for modal-1 and model-2.
+    train_modal2_folder = 'E://dataset/Optical-Optical/sen'
     # Ensure that the paired images have the same name on both folders, and both folders have same number of images.
     save_model_folder = './saved/model/'  # Folder path for saved model for modal-1 and model-2.
     save_loss_folder = './saved/loss_fig/'  # Folder path for saved loss information

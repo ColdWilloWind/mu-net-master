@@ -5,13 +5,15 @@ import torch.utils.checkpoint as checkpoint
 import numpy as np
 from typing import Optional
 
+
 class SE(nn.Module):
     """通道注意力机制"""
+
     def __init__(self, in_channel, ratio):
         super(SE, self).__init__()
         self.squeeze = nn.AdaptiveAvgPool2d((1, 1))
-        self.compress = nn.Conv2d(in_channel, in_channel//ratio, kernel_size=1, stride=1, padding=0)
-        self.excitation = nn.Conv2d(in_channel//ratio, in_channel, kernel_size=1, stride=1, padding=0)
+        self.compress = nn.Conv2d(in_channel, in_channel // ratio, kernel_size=1, stride=1, padding=0)
+        self.excitation = nn.Conv2d(in_channel // ratio, in_channel, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
         out = self.squeeze(x)
@@ -23,6 +25,7 @@ class SE(nn.Module):
 
 class ConvBlock(nn.Module):
     """不带通道注意力机制的卷积块：卷积+归一化+激活函数"""
+
     def __init__(self, in_channel, out_channel, kernel_size, stride, padding):
         super(ConvBlock, self).__init__()
         self.conv2d = nn.Conv2d(in_channels=in_channel, out_channels=out_channel, kernel_size=kernel_size,
@@ -39,6 +42,7 @@ class ConvBlock(nn.Module):
 
 class SEBolck(nn.Module):
     """带通道注意力机制的卷积块"""
+
     def __init__(self, in_channel, out_channel, k, s, p, ratio=16):
         super(SEBolck, self).__init__()
         self.conv_block = ConvBlock(in_channel, out_channel, k, s, p)
@@ -53,6 +57,7 @@ class SEBolck(nn.Module):
 
 class ResBlock(nn.Module):
     """残差卷积块"""
+
     def __init__(self, in_channel, out_channel, kernel_size, strides, padding):
         super(ResBlock, self).__init__()
         self.strides = strides
@@ -75,6 +80,7 @@ class ResBlock(nn.Module):
 
 class ResSEConvBlock(nn.Module):
     """带通道注意力机制的残差卷积块"""
+
     def __init__(self, in_channel, out_channel, k, s, p, ratio=16):
         super(ResSEConvBlock, self).__init__()
         self.conv_block = ResBlock(in_channel, out_channel, k, s, p)
@@ -85,6 +91,7 @@ class ResSEConvBlock(nn.Module):
         se = self.se(out)
         out = out * se
         return out
+
 
 class MUNet_512(nn.Module):
     def __init__(self):
@@ -116,6 +123,7 @@ class MUNet_512(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(6, 6, 1, 1, 0)
         )
+
     def forward(self, input):
         input = self.pooling(input)
         x_1 = self.route_1(input)
@@ -126,4 +134,3 @@ class MUNet_512(nn.Module):
         parameters = self.fullyconnect(x_3)
         parameters = parameters.view(-1, 2, 3)
         return parameters
-

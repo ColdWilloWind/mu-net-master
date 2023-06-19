@@ -8,6 +8,7 @@ import cv2
 from stn.GeoTransformation import AffineTransformFromRange
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def squeezeCondition(tensor_):
     TS = tensor_.size()
     if len(TS)==3 and TS[0]==3:
@@ -16,12 +17,14 @@ def squeezeCondition(tensor_):
         tensor_ = tensor_.squeeze(0)
     return tensor_
 
+
 def show_tensor(t, a, b, c):
     t = squeezeCondition(t)
     t = np.array(t.detach().cpu())
     t = t.astype(np.uint8)
     plt.subplot(a,b,c)
     plt.imshow(t, cmap='gray')
+
 
 class MyDataset(Dataset):
     def __init__(self, path1, path2, geo_distortion):
